@@ -14,7 +14,7 @@ app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
   extended: true
 }));
 
-var srcPath = __dirname + '/../code/';
+var srcPath = __dirname + '/../rts-js2/src';
 
 app.get('/api/test/*', function (req, res) {
   res.send(__dirname);
@@ -24,7 +24,7 @@ app.get('/api/test/*', function (req, res) {
 app.get('/api/list/*', function (req, res) {
   var fileList = fs.readdirSync(srcPath);
   fileList = fileList.filter(function(x) {
-    return x.match(/\.re$/);
+    return x.match(/\.js$/);
   });
   fileList.sort();
   res.send(JSON.stringify(fileList));
