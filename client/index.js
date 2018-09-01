@@ -2,6 +2,9 @@ const $ = require('jquery');
 
 const cm = require('codemirror');
 
+require('codemirror/mode/javascript/javascript');
+require('codemirror/mode/mllike/mllike');
+
 import hotkeys from 'hotkeys-js';
 
 import css from '../css/codemirror.css';
@@ -12,6 +15,8 @@ var saveHotKey = 'ctrl+s';
 var saveHotKeyCM = 'Ctrl-S';
 var openHotKey = 'ctrl+o';
 var openHotKeyCM = 'Ctrl-O';
+var hideHotKey = 'ctrl+h';
+var hideHotKeyCM = 'Ctrl-H';
 
 var activeFile = [""];
 
@@ -55,6 +60,7 @@ function save() {
 }
 
 function selectFilter() {
+  $("#fileFilter").val("");
   $("#fileFilter").focus();
 }
 
@@ -81,7 +87,8 @@ function listFiles() {
 
 function filterFiles(evt) {
   var search = $("#fileFilter").val();
-  var searchTitle = toTitleCase(search) + ".re";
+  // var searchTitle = toTitleCase(search) + ".js";
+  var searchTitle = search + ".js";
   var ul = $("#filelist");
   var count = 0;
   var matches = [];
@@ -120,40 +127,77 @@ function rebind(key, f, opts) {
   }
 }
 
+function toggleEditor() {
+  $("#ide").toggle();
+}
+
 function regHotKeys() {
   rebind(saveHotKey, function(evt, handler) {
-      evt.preventDefault();
-      save();
+    evt.preventDefault();
+    save();
   });
   rebind(openHotKey, function(evt, handler) {
-      evt.preventDefault();
-      selectFilter();
+    evt.preventDefault();
+    selectFilter();
   });
-  rebind("enter", function(evt, handler) {
-    console.log("enter");
-  }, {
-    element: $("#fileFilter")
+  rebind(hideHotKey, function(evt, handler) {
+    evt.preventDefault();
+    toggleEditor();
   });
 }
 
+function resize() {
+  var w = window.innerWidth;
+  var h = window.innerHeight;
+  var w2 = $("#ide").width();
+  $("#content").width(w - w2);
+  $("#content").height(h);
+  $("#content").css("top", "0px");
+  $("#content").css("left", w2 + "px");
+}
+
+function betterTab(cm) {
+  if (cm.somethingSelected()) {
+    cm.indentSelection("add");
+  } else {
+    cm.replaceSelection(
+      cm.getOption("indentWithTabs") ? "\t":
+        Array(cm.getOption("indentUnit") + 1).join(" "), "end", "+input");
+  }
+}
+
 function main() {
-  $("body").html("");
-  $("body").append('<p>File filter:</p><input id="fileFilter" type="text" value=""/>');
+  $("body").html("<div id='ide'/>");
+  $("#ide").css("background", "white");
+  $("#ide").css("opacity", "50%");
+  $("#ide").css("display", "inline-block");
+  $("body").append("<iframe id='content' src='http://localhost:8082/index'/>");
+  $("#content").css("border", "none");
+  $("#content").css("position", "absolute");
+  $("#ide").append('<p>File filter:</p><input id="fileFilter" type="text" value=""/>');
   $("#fileFilter").on("keyup", filterFiles);
   var newFile = $("<p id='newFile'>New file: <span id='newFileName'/></p>");
-  newFile.appendTo("body").toggle();
-  $("body").append('<ul id="filelist"/>');
+  newFile.appendTo("#ide").toggle();
+  $("#ide").append('<ul id="filelist"/>');
   listFiles();
-  $("body").append('<h3 id="openFileTitle">No file open</h3>');
-  $("body").append('<div id="cmwrap"><textarea id="cm"/></div>');
+  $("#ide").append('<h3 id="openFileTitle">No file open</h3>');
+  $("#ide").append('<div id="cmwrap"><textarea id="cm"/></div>');
   var ta = $("#cm")[0];
-  cmInstance[0] = cm.fromTextArea(ta);
+  cmInstance[0] = cm.fromTextArea(ta, {
+    lineNumbers: true,
+    mode: 'javascript'
+  });
   var opts = {};
   opts[saveHotKeyCM] = function(cm) { save(); };
   opts[openHotKeyCM] = function(cm) { selectFilter(); };
+  opts[hideHotKeyCM] = function(cm) { toggleEditor(); };
+  opts.Tab = betterTab;
   cmInstance[0].setOption("extraKeys", opts);
+  cmInstance[0].setSize("40em", "auto");
   regHotKeys();
   selectFilter();
+  resize();
+  $(window).resize(resize);
 }
 
 function entry() {
