@@ -19,7 +19,7 @@
     "bs-platform": "^2.2.1",
     "nodemon": "^1.18.4",
     "uglifyjs-webpack-plugin": "^1.2.2",
-    "webpack": "^3.11.0",
+    "webpack": "^5.75.0",
     "webpack-bundle-analyzer": "^2.11.0",
     "webpack-dev-server": "^2.11.1"
   },
